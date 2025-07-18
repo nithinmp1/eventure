@@ -1,5 +1,5 @@
 import { PrismaClient } from '@prisma/client';
-import 'dotenv/config'; // Load environment variables
+import 'dotenv/config';
 
 const prisma = new PrismaClient();
 
@@ -12,18 +12,15 @@ async function seedDatabase() {
   try {
     console.log('Starting database seeding...');
 
-    // Delete existing data to ensure a clean slate for seeding (optional)
     await prisma.event.deleteMany();
     await prisma.user.deleteMany();
     console.log('Cleared existing data.');
 
-    // Seed Users
     for (const userData of MOCK_USERS) {
       await prisma.user.create({ data: userData });
       console.log(`Created user: ${userData.name}`);
     }
 
-    // Seed Events
     const alice = await prisma.user.findUnique({ where: { email: 'alice@example.com' } });
     const bob = await prisma.user.findUnique({ where: { email: 'bob@example.com' } });
 
@@ -32,9 +29,9 @@ async function seedDatabase() {
         data: {
           name: 'Eventure Launch Party',
           location: 'Virtual Auditorium',
-          startTime: new Date(Date.now() + 86400000).toISOString(), // Tomorrow
+          startTime: new Date(Date.now() + 86400000).toISOString(), 
           attendees: {
-            connect: { id: alice.id }, // Alice joins by default
+            connect: { id: alice.id },
           },
         },
       });
@@ -44,9 +41,9 @@ async function seedDatabase() {
         data: {
           name: 'Community Meetup',
           location: 'Local Cafe',
-          startTime: new Date(Date.now() + 2 * 86400000).toISOString(), // Day after tomorrow
+          startTime: new Date(Date.now() + 2 * 86400000).toISOString(),
           attendees: {
-            connect: { id: bob.id }, // Bob joins by default
+            connect: { id: bob.id },
           },
         },
       });
@@ -56,7 +53,7 @@ async function seedDatabase() {
         data: {
           name: 'GraphQL Deep Dive',
           location: 'Online Webinar',
-          startTime: new Date(Date.now() + 3 * 86400000).toISOString(), // 3 days from now
+          startTime: new Date(Date.now() + 3 * 86400000).toISOString(),
         },
       });
       console.log('Created GraphQL Deep Dive.');
@@ -68,9 +65,9 @@ async function seedDatabase() {
     console.log('Database seeding complete.');
   } catch (e) {
     console.error('Error during database seeding:', e);
-    process.exit(1); // Exit with error code
+    process.exit(1);
   } finally {
-    await prisma.$disconnect(); // Disconnect Prisma client
+    await prisma.$disconnect();
   }
 }
 

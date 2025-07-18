@@ -165,23 +165,45 @@ const io = new SocketIOServer(httpServer, {
 });
 
 // Socket.io connection handling
+const eventRooms: Record<string, Map<string, string>> = {}; // Map<socketId, name>
+
 io.on('connection', (socket) => {
   console.log('A user connected:', socket.id);
 
-  // When a client wants to join an event-specific room for real-time updates
-  socket.on('joinEventRoom', (eventId: string) => {
+  socket.on('joinEventRoom', ({ eventId, name }) => {
     socket.join(eventId);
-    console.log(`Socket ${socket.id} joined event room: ${eventId}`);
+    if (!eventRooms[eventId]) eventRooms[eventId] = new Map();
+    eventRooms[eventId].set(socket.id, name);
+
+    io.to(eventId).emit(
+      'eventUsersUpdate',
+      Array.from(eventRooms[eventId].values())
+    );
   });
 
-  // When a client leaves an event-specific room
   socket.on('leaveEventRoom', (eventId: string) => {
     socket.leave(eventId);
-    console.log(`Socket ${socket.id} left event room: ${eventId}`);
+    eventRooms[eventId]?.delete(socket.id);
+    io.to(eventId).emit(
+      'eventUsersUpdate',
+      Array.from(eventRooms[eventId]?.values() || [])
+    );
+  });
+
+  socket.on('getEventUsers', (eventId: string) => {
+    const users = Array.from(eventRooms[eventId]?.values() || []);
+    socket.emit('eventUsersUpdate', users);
   });
 
   socket.on('disconnect', () => {
-    console.log('User disconnected:', socket.id);
+    for (const [eventId, usersMap] of Object.entries(eventRooms)) {
+      if (usersMap.delete(socket.id)) {
+        io.to(eventId).emit(
+          'eventUsersUpdate',
+          Array.from(usersMap.values())
+        );
+      }
+    }
   });
 });
 
