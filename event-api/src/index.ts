@@ -34,6 +34,11 @@ const typeDefs = `#graphql
     me: User
   }
 
+  type Query {
+    events: [Event!]!
+    event(id: ID!): Event
+  }
+
   type Mutation {
     joinEvent(eventId: ID!): Event
     login(email: String!, password: String!): String # Returns JWT token
@@ -60,6 +65,15 @@ const resolvers = {
         },
       });
       return events;
+    },
+    //  Fetch single event by ID
+    event: async (parent: any, { id }: { id: string }) => {
+      const event = await prisma.event.findUnique({
+        where: { id },
+        include: { attendees: true },
+      });
+      if (!event) throw new Error('Event not found');
+      return event;
     },
     // Return the logged-in user based on the authentication context
     me: async (parent: any, args: any, context: any) => {
